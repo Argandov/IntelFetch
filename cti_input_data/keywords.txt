@@ -1,0 +1,16 @@
+AWS
+EC2
+RDS
+S3
+CloudFront
+Kubernetes
+Slack
+SendGrid
+Go
+Python
+React
+Prometheus
+Grafana
+CI%2FCD
+VPC
+Microservices
