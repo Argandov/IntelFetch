@@ -5,14 +5,14 @@ import sys
 import requests
 import json
 from dateutil import parser
-from dotenv import dotenv_values
+from dotenv import dotenv_values, load_dotenv
 
 model = "gpt-4"
 date_restrict = "m3"
-config = dotenv_values("/Users/jag/Devel/IntelFetch/.env")
-GOOGLE_API_KEY = config["GOOGLE_API_KEY"]
-OPENAI_API_KEY = config["OPENAI_API_KEY"]
-SEARCH_ENGINE_ID = config["SEARCH_ENGINE_ID"]
+load_dotenv()
+GOOGLE_API_KEY = s.environ.get("GOOGLE_API_KEY")
+OPENAI_API_KEY = s.environ.get("OPENAI_API_KEY")
+SEARCH_ENGINE_ID = s.environ.get("SEARCH_ENGINE_ID")
 
 def search_google(Q, GOOGLE_API_KEY, SEARCH_ENGINE_ID, date_restrict):
     search_pages = []
