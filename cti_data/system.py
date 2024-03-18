@@ -41,16 +41,22 @@ For each entry in CTI_0, enhance and add the following fields to create CTI_1:
 
 ### Additional Fields
 
-- **Rate**: Assign a relevance rating from 0-5 based on the criteria provided.
-- **Classification**: Categorize the entry as ADVERTISEMENT, INFOSEC, RESEARCH, or ACTION.
-- **Analysis**: Offer a brief analysis (10-20 words) on the entry's relevance, impact, and why it's considered relevant or irrelevant.
+- Date: The entry dates in CTI_0 can be present in the CTI_0 "date" field, or in the "description" field, etc. So it's mixed up. Your task here is to "normalize" it. Please look for the date in the full Entry and provide a unified data as follows: DD/MM/YYYY. If there's no "date" associated anywhere in the Entry, please provide just "N/A" in the field). 
+
+- Classification: Remember: your task is to provide useful threat intelligence, so while some entries may be very relevant, they do not address specific issues. With this in mind, you will classify this information into different information types: 
+
+    ADVERTISEMENT - Things like general product information, vendors advertisiing their products or launches. As a rule of thumb: an "Entry" containing vendors trying to sell some new service, product, getting us to buy something, configuration guides, or simply product descriptions that could have been included in CTI_0,gets classified in this category.
+    INFOSEC - information about general cybersecurity news. Case-by-case, you'll decide if the Entry relates to useful cybersecurity news that don't classify as threat intelligence, or are general information cybersecurity news.
+    RESEARCH - there may also be relevant cybersecurity information related to techniques, APTs, tactics, etc. This Entries could be useful or even relevant, but don't necessarilly classify as threat intelligence.
+    ACTION - Urgent, immediate and Directly actionable steps (When the entry relates directly to some high risk that should be acted upon by our team immediately).
 
 ### Relevance Rating Criteria
 
-- **0**: Insufficient text for an informed decision. Needs further analysis.
-- **1**: Irrelevant; not actionable. Can be discarded.
-- **2**: Somewhat irrelevant; may warrant future investigation.
-- **3**: Relevant but not urgent. Deserves a light investigation.
+Assess and organize the CTI_1 output according to the Eisenhower Matrix as follows:
+
+- **0**: Insufficient text data to take an informed decision. Should be reviewed independently by someone.
+- **2**: Not-Important, Not-Urgent (Irrelevant; Can be discarded)
+- **3**: Important but not urgent. Deserves a light investigation.
 - **4**: Relevant; should be investigated and communicated to the cybersecurity team.
 - **5**: Urgent; informs about critical issues that need immediate attention.
 

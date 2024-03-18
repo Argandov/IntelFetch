@@ -10,6 +10,7 @@ from cti_data.system import system_context
 # Variable declarations
 model = "gpt-4"
 date_restrict = "m3"
+total_pages = 1 # Total number of Google pages to query
 
 # Load environment variables
 load_dotenv()
@@ -18,11 +19,12 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 SEARCH_ENGINE_ID = os.environ.get("SEARCH_ENGINE_ID")
 
 
-def search_google(Q, GOOGLE_API_KEY, SEARCH_ENGINE_ID, date_restrict):
+def search_google(Q, GOOGLE_API_KEY, SEARCH_ENGINE_ID, date_restrict, total_pages):
     """Function to execute Google search."""
     search_pages = []
-    pages = [1, 2, 3, 4]
-    for page in pages:
+        # Iterate over defined No. of pages to scrape, and then append the search results for every page
+    total_pages = total_pages + 1
+    for page in range(1, total_pages):
         start = (page - 1) * 10 + 1
         url = f"https://www.googleapis.com/customsearch/v1?key={GOOGLE_API_KEY}&cx={SEARCH_ENGINE_ID}&q={Q}&start={start}&dateRestrict={date_restrict}"
         data = requests.get(url).json()
@@ -88,7 +90,7 @@ def extract_data(search_pages, index, COUNTER):
 
 # Main Function
 google_query, KEYWORD_LIST = define_search_queries()
-search_pages = search_google(google_query, GOOGLE_API_KEY, SEARCH_ENGINE_ID, date_restrict)
+search_pages = search_google(google_query, GOOGLE_API_KEY, SEARCH_ENGINE_ID, date_restrict, total_pages)
 COUNTER = 0
 output_pages = []
 
