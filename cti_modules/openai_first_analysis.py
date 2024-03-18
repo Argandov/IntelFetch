@@ -2,14 +2,14 @@ from openai import OpenAI
 from dotenv import dotenv_values
 import sys
 
-def call_openai(OPENAI_API_KEY, keyword_list, system, search_results, model):
+def call_openai(OPENAI_API_KEY, keywords, system, search_results, model):
     client = OpenAI(api_key = OPENAI_API_KEY)
-    header_message = "The following is a tech stack keyword list, for our relevant tech stack:"
 
-    merged_message = \
-            search_results + "\n" + \
-            header_message + "\n" + \
-            keyword_list + "\n"
+    merged_message = "CTI_0 data: \n"
+    merged_message += search_results
+    merged_message += "INFO: The following is a tech stack keyword list, for our relevant tech stack:\n"
+    merged_message += keywords
+    merged_message += "\n"
 
     messages = [
                 {"role": "system", "content": system},

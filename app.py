@@ -1,4 +1,5 @@
 import sys
+import os
 import requests
 from dateutil import parser
 from dotenv import dotenv_values, load_dotenv
@@ -12,9 +13,9 @@ date_restrict = "m3"
 
 # Load environment variables
 load_dotenv()
-GOOGLE_API_KEY = s.environ.get("GOOGLE_API_KEY")
-OPENAI_API_KEY = s.environ.get("OPENAI_API_KEY")
-SEARCH_ENGINE_ID = s.environ.get("SEARCH_ENGINE_ID")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+SEARCH_ENGINE_ID = os.environ.get("SEARCH_ENGINE_ID")
 
 
 def search_google(Q, GOOGLE_API_KEY, SEARCH_ENGINE_ID, date_restrict):
@@ -32,12 +33,12 @@ def search_google(Q, GOOGLE_API_KEY, SEARCH_ENGINE_ID, date_restrict):
 
 def define_search_queries():
     """Function to define the search queries."""
-    keywords = []
+    KEYWORD_LIST = []
     with open('cti_input_data/keywords.txt', 'r') as file:
         for line in file:
-            keywords.append(line.strip())
+            KEYWORD_LIST.append(line.strip())
     # Google query to be added to the REST request URL:
-    Q = '+OR+'.join(keywords)
+    Q = '+OR+'.join(KEYWORD_LIST)
     google_query = Q.replace(' ', '+')
 
     return google_query, KEYWORD_LIST
@@ -60,7 +61,7 @@ def extract_data(search_pages, index, COUNTER):
         try:
             result_published_date = search_item["pagemap"]["metatags"][0].get("article:published_time", "N/A")
             date = parser.parse(result_published_date)
-        except ValueError:
+        except Exception:
             result_published_date = "N/A"
 
         # Get the page title
@@ -82,7 +83,7 @@ def extract_data(search_pages, index, COUNTER):
         PAGE_SEARCH_RESULTS += "Long Description: " + RESULT_LONG_DESCRIPTION + "\n"
         PAGE_SEARCH_RESULTS += "URL: " + result_link + "\n"
 
-        return PAGE_SEARCH_RESULTS
+    return PAGE_SEARCH_RESULTS
 
 
 # Main Function
@@ -97,19 +98,23 @@ for i in range(len(search_pages)):
     output_pages.append(extract_data(search_pages[i], index, COUNTER))
     COUNTER += 1
 
-# Debugging and print statements
+    # Debugging and print statements
+PAGE_SEARCH_RESULTS = ""
 for page in output_pages:
     print(page)
+    PAGE_SEARCH_RESULTS += page
 
-total_data_string = ""
-for page in output_pages:
-    total_data_string += page + "\n"
+print(type(PAGE_SEARCH_RESULTS))
+
+    # Transform the keyword list into a str
+KEYWORDS = '\n'.join(KEYWORD_LIST)
 
 response, tokens_used = call_openai(
         OPENAI_API_KEY,
-        KEYWORD_LIST,
+        KEYWORDS,
         system_context,
         PAGE_SEARCH_RESULTS,
         model)
 
+print(response)
 print(f"Number of pages scraped: {len(output_pages)}")
