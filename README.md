@@ -1,6 +1,6 @@
 # Intel Fetch (Beta)
 
-A python program that fetches Threat Intelligence from a custom ("Programmable") Google search engine, filtered by keywords, compiles all the results and uses OpenAI to analyze this information.
+A python program that fetches Threat Intelligence from a custom ("Programmable") Google search engine, filtered by keywords, compiles all the results and uses OpenAI OR Anthropic's Claude 3 to analyze this information.
 
 1. User provides a set of keywords to be searched through Google by a specific custom search engine,
 2. IntelFetch performs a Google search for this keywords using OR operands,

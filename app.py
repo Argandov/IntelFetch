@@ -3,20 +3,38 @@ import os
 import requests
 from dateutil import parser
 from dotenv import dotenv_values, load_dotenv
+import random
+import json
+import urllib.parse
 
-from cti_modules.openai_first_analysis import call_openai
-from cti_data.system import system_context
+from cti_data.system import system_context, system_newsletter
 
-# Variable declarations
-model = "gpt-4"
+    # VARIABLES
 date_restrict = "m3"
 total_pages = 1 # Total number of Google pages to query
-
-# Load environment variables
+    # LOAD ENV VARS
 load_dotenv()
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 SEARCH_ENGINE_ID = os.environ.get("SEARCH_ENGINE_ID")
+
+"""
+    TEMPORAL: 
+    Argumentos para Claude ó OpenAI
+"""
+
+# Check if argument is either "claude" or "gpt":
+if sys.argv[1] == "claude":
+    model = "claude-3-opus-20240229"
+    from cti_modules.tier1Claude import call_tier1, call_tier2
+    LLM_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+elif sys.argv[1] == "gpt":
+    model = "gpt-4"
+    from cti_modules.tier1OpenAI import call_tier1, call_tier2
+    LLM_API_KEY = os.environ.get("OPENAI_API_KEY")
+else:
+    print("Invalid argument. Please use 'claude' or 'gpt'.")
+    sys.exit(1)
+
 
 
 def search_google(Q, GOOGLE_API_KEY, SEARCH_ENGINE_ID, date_restrict, total_pages):
@@ -27,23 +45,38 @@ def search_google(Q, GOOGLE_API_KEY, SEARCH_ENGINE_ID, date_restrict, total_page
     for page in range(1, total_pages):
         start = (page - 1) * 10 + 1
         url = f"https://www.googleapis.com/customsearch/v1?key={GOOGLE_API_KEY}&cx={SEARCH_ENGINE_ID}&q={Q}&start={start}&dateRestrict={date_restrict}"
+        # PRINT A REDACTED URL FOR DEBUGGING PURPOSES
+        url_redacted = f"https://www.googleapis.com/customsearch/v1?key=XXXXXXXXX&cx={SEARCH_ENGINE_ID}&q={Q}&start={start}&dateRestrict={date_restrict}"
+        print(url_redacted)
         data = requests.get(url).json()
         search_page = data.get("items")
         search_pages.append(search_page)
+    if search_pages == []:
+        print("No results found")
+        sys.exit(1)
+    else:
+        print(f"[+] Found {len(search_pages)} results")
     return search_pages
 
 
 def define_search_queries():
-    """Function to define the search queries."""
     KEYWORD_LIST = []
-    with open('cti_input_data/keywords.txt', 'r') as file:
-        for line in file:
-            KEYWORD_LIST.append(line.strip())
-    # Google query to be added to the REST request URL:
-    Q = '+OR+'.join(KEYWORD_LIST)
-    google_query = Q.replace(' ', '+')
+    try:
+        with open('cti_input_data/keywords.txt', 'r') as file:
+            for line in file:
+                KEYWORD_LIST.append(line.strip())
 
-    return google_query, KEYWORD_LIST
+        # Construct Google query with OR conditions
+        query_terms = ' OR '.join(['(' + term + ')' for term in KEYWORD_LIST])
+        google_query = urllib.parse.quote(query_terms)
+
+        return google_query, KEYWORD_LIST
+    except FileNotFoundError:
+        print("File not found. Please check the file path.")
+        return None, None
+    except Exception as e:
+        print("An error occurred:", e)
+        return None, None
 
 
 def extract_data(search_pages, index, COUNTER):
@@ -75,7 +108,7 @@ def extract_data(search_pages, index, COUNTER):
         # Extract the page url
         result_link = search_item.get("link")
 
-        buffer = "=" * 10
+        buffer = "=" * 25
         data_separator = buffer + f"Result #{i+COUNTER}" + buffer
         PAGE_SEARCH_RESULTS += data_separator + "\n"
         PAGE_SEARCH_RESULTS += "Title: " + RESULT_TITLE + "\n"
@@ -86,7 +119,6 @@ def extract_data(search_pages, index, COUNTER):
         PAGE_SEARCH_RESULTS += "URL: " + result_link + "\n"
 
     return PAGE_SEARCH_RESULTS
-
 
 # Main Function
 google_query, KEYWORD_LIST = define_search_queries()
@@ -103,20 +135,46 @@ for i in range(len(search_pages)):
     # Debugging and print statements
 PAGE_SEARCH_RESULTS = ""
 for page in output_pages:
-    print(page)
+    #print(page)
     PAGE_SEARCH_RESULTS += page
 
-print(type(PAGE_SEARCH_RESULTS))
 
     # Transform the keyword list into a str
 KEYWORDS = '\n'.join(KEYWORD_LIST)
 
-response, tokens_used = call_openai(
-        OPENAI_API_KEY,
+#input("[+] Enter to continue.")
+print(PAGE_SEARCH_RESULTS)
+# Press Enter to continue:
+input("[+] Enter to continue.")
+
+print(f"[+] Opening LLM {model} at TIER1...")
+response, tokens_used = call_tier1(
+        LLM_API_KEY,
         KEYWORDS,
         system_context,
         PAGE_SEARCH_RESULTS,
         model)
+try:
+    JSON_CTI1 = json.dumps(response)
+    print(f"[i] TIER1 Finished. Tokens used in CTI_1: {tokens_used}")
+except Exception as e:
+    print(response)
+    print(f"[!] ERROR: {e}")
+    sys.exit(1)
 
-print(response)
-print(f"Number of pages scraped: {len(output_pages)}")
+if JSON_CTI1:
+    print(f"[+] Opening LLM {model} at TIER1...")
+    response, tokens_used = call_tier2(
+            LLM_API_KEY,
+            system_newsletter,
+            JSON_CTI1,
+            model)
+    print(f"[i] TIER2 Finished. Tokens used in CTI_2: {tokens_used}")
+    # Create a new .md file in the output/ folder with a random name, and put "response" contents into it:
+    outfile = f"{random.randint(100,200)}.md"
+    with open(f'output/{outfile}', 'w') as file:
+        outfile_contents = response + "\n" + "---" + "\n" + PAGE_SEARCH_RESULTS
+        file.write(outfile_contents)
+        print(f"[i] File written at \noutput/{outfile}")
+
+print("SUCCESS: TIER1 and TIER2 completed. Exiting...")
