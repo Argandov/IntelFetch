@@ -10,29 +10,25 @@ import urllib.parse
 from cti_data.system import system_context, system_newsletter
 
     # VARIABLES
-date_restrict = "m3"
+date_restrict = "m3" # m3 = past 3 months
 total_pages = 1 # Total number of Google pages to query
+
     # LOAD ENV VARS
 load_dotenv()
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 SEARCH_ENGINE_ID = os.environ.get("SEARCH_ENGINE_ID")
 
-"""
-    TEMPORAL: 
-    Argumentos para Claude ó OpenAI
-"""
-
-# Check if argument is either "claude" or "gpt":
-if sys.argv[1] == "claude":
+# TEMPORARY: Check if argument is either "claude" or "gpt":
+if sys.argv[1] == "claude3":
     model = "claude-3-opus-20240229"
     from cti_modules.tier1Claude import call_tier1, call_tier2
     LLM_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
-elif sys.argv[1] == "gpt":
+elif sys.argv[1] == "gpt4":
     model = "gpt-4"
     from cti_modules.tier1OpenAI import call_tier1, call_tier2
     LLM_API_KEY = os.environ.get("OPENAI_API_KEY")
 else:
-    print("Invalid argument. Please use 'claude' or 'gpt'.")
+    print("Invalid argument. Please use 'claude3' or 'gpt4'.")
     sys.exit(1)
 
 
@@ -45,7 +41,7 @@ def search_google(Q, GOOGLE_API_KEY, SEARCH_ENGINE_ID, date_restrict, total_page
     for page in range(1, total_pages):
         start = (page - 1) * 10 + 1
         url = f"https://www.googleapis.com/customsearch/v1?key={GOOGLE_API_KEY}&cx={SEARCH_ENGINE_ID}&q={Q}&start={start}&dateRestrict={date_restrict}"
-        # PRINT A REDACTED URL FOR DEBUGGING PURPOSES
+        # PRINT A REDACTED (FOR DEBUGGING PURPOSES)
         url_redacted = f"https://www.googleapis.com/customsearch/v1?key=XXXXXXXXX&cx={SEARCH_ENGINE_ID}&q={Q}&start={start}&dateRestrict={date_restrict}"
         print(url_redacted)
         data = requests.get(url).json()
@@ -171,7 +167,7 @@ if JSON_CTI1:
             model)
     print(f"[i] TIER2 Finished. Tokens used in CTI_2: {tokens_used}")
     # Create a new .md file in the output/ folder with a random name, and put "response" contents into it:
-    outfile = f"{random.randint(100,200)}.md"
+    outfile = f"{random.randint(100,20000)}.md"
     with open(f'output/{outfile}', 'w') as file:
         outfile_contents = response + "\n" + "---" + "\n" + PAGE_SEARCH_RESULTS
         file.write(outfile_contents)
